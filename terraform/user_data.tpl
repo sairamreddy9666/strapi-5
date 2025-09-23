@@ -14,7 +14,7 @@ sudo ./aws/install
 
 # Authenticate Docker to ECR
 REGION="ap-south-1"
-aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${image_url%/*}
+aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $${image_url%/*}
 
 # Pull and run Strapi
-docker run -d -p 1337:1337 --name strapi ${image_url}
+docker run -d -p 1337:1337 --name strapi $${image_url}
