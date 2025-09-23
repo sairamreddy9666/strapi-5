@@ -1,31 +1,50 @@
-name: CI - Build and Push to ECR
+name: Build and Push Strapi Docker Image
 
 on:
   push:
     branches:
       - main
 
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  IMAGE_TAG: ${{ github.sha }}  # unique tag per commit
+  IMAGE_URI: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}
+
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+
     steps:
+      # 1. Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      # 2. Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
+      # 3. Login to Amazon ECR
       - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, Tag, and Push Docker image
+      # 4. Build Docker image
+      - name: Build Docker image
         run: |
-          IMAGE_URI=${{ steps.login-ecr.outputs.registry }}/strapi:latest
-          docker build -t $IMAGE_URI .
-          docker push $IMAGE_URI
+          docker build -t ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }} .
 
+      # 5. Push Docker image to ECR
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }}
+
+      # 6. Optional: Tag latest
+      - name: Tag latest
+        run: |
+          docker tag ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }} ${{ env.IMAGE_URI }}:latest
+          docker push ${{ env.IMAGE_URI }}:latest
