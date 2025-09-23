@@ -41,5 +41,10 @@ jobs:
           echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> $GITHUB_ENV
           echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}" >> $GITHUB_ENV
 
+      - name: Create .env file
+        run: |
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" > .env
+          echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}" >> .env
+          
       - name: Pull images
         run: docker compose --env-file .env pull
