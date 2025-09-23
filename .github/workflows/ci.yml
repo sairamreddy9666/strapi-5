@@ -49,9 +49,6 @@ jobs:
       - name: Pull images
         run: docker compose -f ./src/compose.yml --env-file .env pull
 
-      - name: Build Docker image
-        run: docker build -t ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }} ./src
-
       # 5. Push Docker image to ECR
       - name: Push Docker image
         run: docker push ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }}
