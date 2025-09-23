@@ -47,4 +47,4 @@ jobs:
           echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}" >> .env
           
       - name: Pull images
-        run: docker compose --env-file .env pull
+        run: docker compose -f ./src/docker-compose.yml --env-file .env pull
