@@ -33,15 +33,15 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: List files in workspace
+        run: ls -la ./src
+
       # 4. Build Docker image
       - name: Build Docker image
-        run: |
-          docker build -t ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }} .
+        run: docker build -t ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }} ./src
 
-      # 5. Push Docker image to ECR
       - name: Push Docker image
-        run: |
-          docker push ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }}
+        run: docker push ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }}
 
       # 6. Optional: Tag latest
       - name: Tag latest
