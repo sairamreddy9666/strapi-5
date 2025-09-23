@@ -33,9 +33,6 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: List files in workspace
-        run: ls -la ./src
-
       - name: Set environment variables for compose
         run: |
           echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> $GITHUB_ENV
@@ -46,15 +43,18 @@ jobs:
           echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" > .env
           echo "ECR_REPOSITORY=${{ secrets.ECR_REPOSITORY }}" >> .env
           
-      - name: Pull images
+      # 6. Pull prebuilt Strapi image from Docker Hub
+      - name: Pull Strapi image from Docker Hub
+        run: docker pull sairambadari/strapi:latest
+
+      # 7. Tag Strapi image for ECR
+      - name: Tag Strapi image for ECR
+        run: docker tag sairambadari/strapi:latest ${{ env.IMAGE_URI }}:latest
+
+      # 8. Push Strapi image to ECR
+      - name: Push Strapi image to ECR
+        run: docker push ${{ env.IMAGE_URI }}:latest
+
+      # 9. Pull all images using Compose (Postgres + Strapi from ECR)
+      - name: Pull Compose images
         run: docker compose -f ./src/compose.yml --env-file .env pull
-
-      # 5. Push Docker image to ECR
-      - name: Push Docker image
-        run: docker push ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }}
-
-      # 6. Tag as latest and push
-      - name: Tag latest and push
-        run: |
-          docker tag ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }} ${{ env.IMAGE_URI }}:latest
-          docker push ${{ env.IMAGE_URI }}:latest
