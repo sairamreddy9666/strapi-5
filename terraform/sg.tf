@@ -1,7 +1,11 @@
+data "aws_subnet" "selected" {
+  id = "subnet-0393e7c5b435bd5b6"
+}
+
 resource "aws_security_group" "strapi_sg" {
   name        = "strapi-sg"
   description = "Allow HTTP, SSH"
-  vpc_id = "vpc-02a4f224050649700"
+  vpc_id = data.aws_subnet.selected.vpc_id
 
   ingress {
     description = "HTTP"
