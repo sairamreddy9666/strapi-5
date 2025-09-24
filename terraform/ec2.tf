@@ -7,14 +7,13 @@ data "aws_security_group" "strapi_sg" {
 }
 
 resource "aws_instance" "strapi" {
-  ami           = var.ami_id
-  instance_type = var.instance_type
-  key_name      = var.key_name
+  ami               = var.ami_id
+  instance_type     = var.instance_type
+  key_name          = var.key_name
   availability_zone = "ap-south-1a"
-  subnet_id     = "subnet-0393e7c5b435bd5b6"
+  subnet_id         = "subnet-0393e7c5b435bd5b6"
 
-
-  vpc_security_group_ids = [aws_security_group.strapi_sg.id]
+  vpc_security_group_ids = [data.aws_security_group.strapi_sg.id]
 
   user_data = templatefile("${path.module}/user_data.tpl", {
     image_url = "${data.aws_ecr_repository.strapi.repository_url}:${var.image_tag}"
@@ -24,4 +23,3 @@ resource "aws_instance" "strapi" {
     Name = "Sairam-Server"
   }
 }
-
