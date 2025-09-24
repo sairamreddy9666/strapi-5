@@ -3,7 +3,7 @@ resource "aws_instance" "strapi" {
   instance_type = var.instance_type
   key_name      = var.key_name
   availability_zone = "ap-south-1a"
-  vpc_security_group_ids = [aws_security_group.strapi_sg.id]
+  vpc_security_group_ids      = ["sg-0abc1234def5678gh"]
 
   user_data = templatefile("${path.module}/user_data.tpl", {
     image_url = "${data.aws_ecr_repository.strapi.repository_url}:${var.image_tag}"
