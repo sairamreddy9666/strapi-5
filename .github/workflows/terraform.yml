@@ -1,27 +1,53 @@
-name: Deploy with Terraform
+name: CD - Deploy Strapi on EC2
 
 on:
   workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'ECR image tag to deploy (SHA from CI)'
+        required: true
+        default: ''
 
 jobs:
-  deploy:
+  terraform:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+    environment: production
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
+    steps:
+      # 1. Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
+      # 3. Setup Terraform
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.0
 
+      # 4. Terraform init
       - name: Terraform Init
-        run: terraform -chdir=terraform init
+        run: terraform init
+        working-directory: ./terraform
 
+      # 5. Terraform plan
+      - name: Terraform Plan
+        run: terraform plan -var="image_tag=${{ github.event.inputs.image_tag }}" -out=tfplan
+        working-directory: ./terraform
+
+      # 6. Terraform apply
       - name: Terraform Apply
-        run: terraform -chdir=terraform destroy -auto-approve -var="image_tag=latest"
+        run: terraform apply -auto-approve tfplan
+        working-directory: ./terraform
 
+      # 7. Output public IP
+      - name: Show deployed EC2 public IP
+        run: terraform output instance_public_ip
+        working-directory: ./terraform
