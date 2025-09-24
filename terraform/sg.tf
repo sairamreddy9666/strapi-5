@@ -1,6 +1,7 @@
 resource "aws_security_group" "strapi_sg" {
-  name        = "strapi-sg-new"
+  name        = "strapi-sg"
   description = "Allow HTTP, SSH"
+  vpc_id = "vpc-02a4f224050649700"
 
   ingress {
     description = "HTTP"
