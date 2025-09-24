@@ -15,7 +15,7 @@ resource "aws_instance" "strapi" {
 
   vpc_security_group_ids = [data.aws_security_group.strapi_sg.id]
 
-  user_data = file("user_data.sh")
+  user_data = file("user_data.tpl")
 
   tags = {
     Name = "Sairam-Server"
