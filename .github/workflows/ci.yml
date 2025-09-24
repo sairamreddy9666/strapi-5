@@ -49,12 +49,15 @@ jobs:
 
       # 7. Tag Strapi image for ECR
       - name: Tag Strapi image for ECR
-        run: docker tag sairambadari/strapi:latest ${{ env.IMAGE_URI }}:latest
+        run: docker tag sairambadari/strapi:latest ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }}
 
       # 8. Push Strapi image to ECR
       - name: Push Strapi image to ECR
-        run: docker push ${{ env.IMAGE_URI }}:latest
+        run: docker push ${{ env.IMAGE_URI }}:${{ env.IMAGE_TAG }}
 
       # 9. Pull all images using Compose (Postgres + Strapi from ECR)
       - name: Pull Compose images
         run: docker compose -f ./src/compose.yml --env-file .env pull
+        
+      - name: Output image tag
+        run: echo "Pushed $IMAGE_URI"
