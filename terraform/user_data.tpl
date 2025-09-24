@@ -1,20 +1,32 @@
 #!/bin/bash
 set -e
 
-# Install Docker
-yum update -y
-amazon-linux-extras install docker -y
+# install docker
+yum update -y || apt-get update -y
+if command -v yum >/dev/null 2>&1; then
+  yum install -y docker
+else
+  apt-get install -y docker.io
+fi
+
 systemctl enable docker
 systemctl start docker
 
-# Install AWS CLI v2
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
+# AWS ECR login
+aws configure set default.region ${region}
+aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${region}.amazonaws.com
 
-# Authenticate Docker to ECR
-REGION="ap-south-1"
-aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $${image_url%/*}
+# Pull Strapi image with SHA tag
+IMAGE_URI=${account_id}.dkr.ecr.${region}.amazonaws.com/${ecr_repo}:${image_tag}
 
-# Pull and run Strapi
-docker run -d -p 1337:1337 --name strapi $${image_url}
+# Stop existing container if any
+if docker ps -a --format '{{.Names}}' | grep -q '^strapi-container$'; then
+  docker rm -f strapi-container || true
+fi
+
+# Run container mapping host 80 -> container 1337
+docker run -d --name strapi-container -p 80:1337 \
+  -e NODE_ENV=production \
+  -e DATABASE_CLIENT=sqlite \
+  --restart unless-stopped \
+  ${IMAGE_URI}
