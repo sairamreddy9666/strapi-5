@@ -1,32 +1,43 @@
 #!/bin/bash
-set -e
 
-# install docker
-yum update -y || apt-get update -y
-if command -v yum >/dev/null 2>&1; then
-  yum install -y docker
-else
-  apt-get install -y docker.io
-fi
+sudo yum update -y
 
-systemctl enable docker
-systemctl start docker
+sudo yum install -y docker
 
-# AWS ECR login
-aws configure set default.region ${region}
-aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${account_id}.dkr.ecr.${region}.amazonaws.com
+sudo systemctl enable docker
 
-# Pull Strapi image with SHA tag
-IMAGE_URI=${account_id}.dkr.ecr.${region}.amazonaws.com/${ecr_repo}:${image_tag}
+sudo systemctl start docker
 
-# Stop existing container if any
-if docker ps -a --format '{{.Names}}' | grep -q '^strapi-container$'; then
-  docker rm -f strapi-container || true
-fi
+docker run -d --name postgres-container \
 
-# Run container mapping host 80 -> container 1337
-docker run -d --name strapi-container -p 80:1337 \
-  -e NODE_ENV=production \
-  -e DATABASE_CLIENT=sqlite \
-  --restart unless-stopped \
-  ${IMAGE_URI}
+-e POSTGRES_USER=strapi \
+
+-e POSTGRES_PASSWORD=strapi \
+
+-e POSTGRES_DB=strapi \
+
+-p 5432:5432 \
+
+postgres:15-alpine
+
+sleep 10
+
+POSTGRES_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' postgres-container)
+
+docker run -itd --name strapi-container \
+
+-e DATABASE_CLIENT=postgres \
+
+-e DATABASE_NAME=strapi \
+
+-e DATABASE_HOST=$POSTGRES_IP \
+
+-e DATABASE_PORT=5432 \
+
+-e DATABASE_USERNAME=strapi \
+
+-e DATABASE_PASSWORD=strapi \
+
+-p 1337:1337 \
+
+sairambadari/strapi:latest
